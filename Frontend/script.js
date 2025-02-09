@@ -29,6 +29,8 @@ recordBtn.addEventListener("click", async () => {
       });
       livePreview.srcObject = stream;
 
+      livePreview.muted = true;
+      livePreview.play();
       // Start Recording
       recordedChunks = [];
       mediaRecorder = new MediaRecorder(stream);
