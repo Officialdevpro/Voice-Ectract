@@ -5,6 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Voice</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" />
+
     <link rel="stylesheet" href="style.css" />
 
     <link
@@ -14,7 +17,7 @@
   </head>
   <body>
     <video id="livePreview" autoplay></video>
-    <video id="recordedVideo" controls style="display: none;"></video>
+    <video id="recordedVideo" controls style="display: none"></video>
     <nav>
       <div class="nav-content">
         <div class="toggle-btn">
@@ -34,5 +37,6 @@
     </nav>
 
     <script src="script.js"></script>
+    <script src="./service-worker.js"></script>
   </body>
 </html>

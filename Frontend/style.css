@@ -5,7 +5,20 @@
 }
 body {
   height: 100vh;
-  background:#ffd000;
+  background-image: radial-gradient(
+      18% 28% at 24% 50%,
+      #cefaffff 7%,
+      #073aff00 100%
+    ),
+    radial-gradient(18% 28% at 18% 71%, #ffffff59 6%, #073aff00 100%),
+    radial-gradient(70% 53% at 36% 76%, #73f2ffff 0, #073aff00 100%),
+    radial-gradient(42% 53% at 15% 94%, #ffffffff 7%, #073aff00 100%),
+    radial-gradient(42% 53% at 34% 72%, #ffffffff 7%, #073aff00 100%),
+    radial-gradient(18% 28% at 35% 87%, #ffffffff 7%, #073aff00 100%),
+    radial-gradient(31% 43% at 7% 98%, #ffffffff 24%, #073aff00 100%),
+    radial-gradient(35% 56% at 91% 74%, #8a4ffff5 9%, #073aff00 100%),
+    radial-gradient(74% 86% at 67% 38%, #fffffff5 24%, #073aff00 100%),
+    linear-gradient(125deg, #4eb5ffff 1%, #4c00fcff 100%);
   overflow: hidden;
 }
 nav {
@@ -46,7 +59,7 @@ nav .nav-content {
   font-size: 35px;
   color: #0e2431;
   z-index: 100;
-  cursor: pointer;
+
   transform: rotate(-225deg);
   transition: all 0.6s ease;
 }
@@ -81,9 +94,9 @@ nav.open .nav-content span {
   opacity: 1;
 }
 
-video{
-    width: 100%;
-    position: absolute;
-    top: 20px;
-    height: 80%;
+video {
+  width: 100%;
+  position: absolute;
+  top: 20px;
+  height: 80%;
 }
