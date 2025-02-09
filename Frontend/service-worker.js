@@ -1,10 +1,9 @@
 const CACHE_NAME = "voice-purifier-cache-v1";
 const urlsToCache = [
-  "/Frontend/index.html",
-  "/Frontend/style.css",
-  "/Frontend/script.js",
-  "/Frontend/icons/image.png",
-  "/Frontend/icons/image.png"
+  "./index.html",  // Use relative path
+  "./style.css",
+  "./script.js",
+  "./icons/image.png"
 ];
 
 // Install Service Worker

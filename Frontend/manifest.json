@@ -2,10 +2,10 @@
     "name": "Voice Purifier",
     "short_name": "VoicePurifier",
     "description": "A web app to record and purify voice without echo.",
-    "start_url": "/Frontend/index.html",
+    "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#ffd000",
+    "theme_color": "#000",
     "icons": [
       {
         "src": "icons/image.png",
