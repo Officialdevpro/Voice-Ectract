@@ -16,8 +16,12 @@
     />
   </head>
   <body>
-    <video id="livePreview" autoplay></video>
-    <video id="recordedVideo" controls style="display: none"></video>
+    <div class="preview-container">
+      <video id="livePreview" autoplay></video>
+      <video id="recordedVideo" controls style="display: none"></video>
+      <audio id="audioPreview" controls src="" style="display: none"></audio>
+    </div>
+
     <nav>
       <div class="nav-content">
         <div class="toggle-btn">

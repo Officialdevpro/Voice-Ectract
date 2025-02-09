@@ -66,4 +66,28 @@ recordBtn.addEventListener("click", async () => {
       stream.getTracks().forEach((track) => track.stop());
     };
   }
+
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(recordedChunks, { type: "video/webm" });
+    const videoURL = URL.createObjectURL(blob);
+    recordedVideo.src = videoURL;
+    recordedVideo.style.display = "block"; // Show recorded video
+    livePreview.style.display = "none"; // Hide live preview
+    livePreview.style.width = "100px";
+
+    // Extract and Preview Audio
+    extractAudioFromVideo(blob);
+
+    // Stop camera stream
+    stream.getTracks().forEach((track) => track.stop());
+  };
+
+  function extractAudioFromVideo(videoBlob) {
+    const audioPreview = document.getElementById("audioPreview");
+    const audioBlob = new Blob([videoBlob], { type: "audio/webm" });
+    const audioURL = URL.createObjectURL(audioBlob);
+    audioPreview.src = audioURL;
+    audioPreview.controls = true;
+    audioPreview.style.display = "block"; // Show audio preview
+  }
 });
