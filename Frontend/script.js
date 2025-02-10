@@ -1,93 +1,56 @@
-// getting HTML elements
 const nav = document.querySelector("nav"),
   toggleBtn = nav.querySelector(".toggle-btn");
+const recordBtn = document.getElementById("recordBtn");
+const fileInput = document.createElement("input"); // Create an input element dynamically
+fileInput.type = "file"; // Set type to file
+fileInput.accept = "audio/mp3"; // Allow only MP3 files
 
 toggleBtn.addEventListener("click", () => {
   nav.classList.toggle("open");
 });
 
-const recordBtn = document.getElementById("recordBtn");
-const livePreview = document.getElementById("livePreview");
-const recordedVideo = document.getElementById("recordedVideo");
+recordBtn.addEventListener("click", () => {
+  // Trigger file input when "Record" button is clicked
+  fileInput.click();
+});
 
-let mediaRecorder;
-let recordedChunks = [];
-let isRecording = false;
-let stream = null;
-
-recordBtn.addEventListener("click", async () => {
-  if (!isRecording) {
-    recordBtn.firstElementChild.firstElementChild.setAttribute(
-      "class",
-      "bx bx-stop"
-    );
-    try {
-      // Get Camera Access
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      livePreview.srcObject = stream;
-
-      livePreview.muted = true;
-      livePreview.play();
-      // Start Recording
-      recordedChunks = [];
-      mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.start();
-      isRecording = true;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunks.push(event.data);
-        }
-      };
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-    }
+// When a file is selected by the user
+fileInput.addEventListener("change", (event) => {
+  const file = event.target.files[0]; // Get the selected file
+  if (file && file.type === "audio/mp3") {
+    // Send the selected audio file to the backend directly
+    sendAudioToBackend(file);
   } else {
-    // Stop Recording
-    mediaRecorder.stop();
-    isRecording = false;
-    recordBtn.firstElementChild.firstElementChild.setAttribute(
-      "class",
-      "bx bx-video"
-    );
-    nav.classList.toggle("open");
-
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: "video/webm" });
-      const videoURL = URL.createObjectURL(blob);
-      recordedVideo.src = videoURL;
-      recordedVideo.style.display = "block"; // Show recorded video
-      livePreview.style.display = "none"; // Hide live preview
-
-      // Stop camera stream
-      stream.getTracks().forEach((track) => track.stop());
-    };
-  }
-
-  mediaRecorder.onstop = () => {
-    const blob = new Blob(recordedChunks, { type: "video/webm" });
-    const videoURL = URL.createObjectURL(blob);
-    recordedVideo.src = videoURL;
-    recordedVideo.style.display = "block"; // Show recorded video
-    livePreview.style.display = "none"; // Hide live preview
-    livePreview.style.width = "100px";
-
-    // Extract and Preview Audio
-    extractAudioFromVideo(blob);
-
-    // Stop camera stream
-    stream.getTracks().forEach((track) => track.stop());
-  };
-
-  function extractAudioFromVideo(videoBlob) {
-    const audioPreview = document.getElementById("audioPreview");
-    const audioBlob = new Blob([videoBlob], { type: "audio/webm" });
-    const audioURL = URL.createObjectURL(audioBlob);
-    audioPreview.src = audioURL;
-    audioPreview.controls = true;
-    audioPreview.style.display = "block"; // Show audio preview
+    alert("Please select an MP3 audio file.");
   }
 });
+
+// Function to send the audio file to the backend
+function sendAudioToBackend(audioFile) {
+  const formData = new FormData();
+  formData.append("file", audioFile, audioFile.name); // Append the selected audio file
+
+  // Send the audio file to the backend via POST request
+  fetch("http://127.0.0.1:5000/process-audio", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return response.blob(); // Get the processed audio as a Blob
+    })
+    .then((processedAudioBlob) => {
+      console.log("Audio processed successfully");
+
+      // Optionally, you can process the returned audio here
+      const processedAudioURL = URL.createObjectURL(processedAudioBlob);
+      // Handle processed audio, e.g., create an audio element
+      const audioElement = new Audio(processedAudioURL);
+      audioElement.play();
+    })
+    .catch((error) => {
+      console.error("Error uploading or processing audio:", error);
+    });
+}

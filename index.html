@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio File Upload</title>
+</head>
+<body>
+    <h1>Upload Audio File (MP3 Only)</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="audioInput">Select an Audio File (MP3 Only):</label>
+        <input type="file" id="audioInput" accept="audio/mp3" required>
+        <button type="submit">Upload Audio</button>
+    </form>
+
+    <div id="status"></div>
+
+    <h2>Processed Audio</h2>
+    <audio id="audioOutput" controls style="display: none;">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        const form = document.getElementById("uploadForm");
+        const audioInput = document.getElementById("audioInput");
+        const audioOutput = document.getElementById("audioOutput");
+        const statusDiv = document.getElementById("status");
+
+        // Handle the form submission
+        form.addEventListener("submit", (event) => {
+            event.preventDefault(); // Prevent the form from submitting normally
+            
+            const file = audioInput.files[0]; // Get the selected file
+            
+            if (file) {
+                // Check if the file is an MP3 based on file type and extension
+                const fileType = file.type;
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                if (fileType === "audio/mp3" || fileExtension === "mp3") {
+                    statusDiv.textContent = "Uploading audio...";
+                    sendAudioToBackend(file);
+                } else {
+                    alert("Please select a valid MP3 audio file.");
+                }
+            } else {
+                alert("No file selected. Please select a file.");
+            }
+        });
+
+        // Function to send the audio file to the backend
+       // Function to send the audio file to the backend
+function sendAudioToBackend(audioFile) {
+    const formData = new FormData();
+    formData.append("file", audioFile, audioFile.name); // Append the selected audio file
+
+    // Send the audio file to the backend via POST request
+    fetch("http://127.0.0.1:5000/process-audio", {
+        method: "POST",
+        body: formData,
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.blob(); // Get the processed audio as a Blob
+    })
+    .then((processedAudioBlob) => {
+        console.log("Audio processed successfully");
+
+        // Create a URL for the processed audio
+        const processedAudioURL = URL.createObjectURL(processedAudioBlob);
+        // Show and play the processed audio
+        const audioOutput = document.getElementById("audioOutput");
+        audioOutput.style.display = "block";
+        audioOutput.src = processedAudioURL;
+        audioOutput.play();
+    })
+    .catch((error) => {
+        console.error("Error uploading or processing audio:", error);
+    });
+}
+
+    </script>
+</body>
+</html>
