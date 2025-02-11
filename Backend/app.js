@@ -46,10 +46,8 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
         console.log(`Enhanced file: ${enhancedPath}`);
 
         // Send the cleaned audio file as a response
-        res.status(200).json({
-            super:"santhosam anadham"
-        })
-        // res.download(enhancedPath, "processed_audio.wav", (err) => {
+        
+        res.download(enhancedPath, "processed_audio.wav", (err) => {
         //   if (err) {
         //     console.error("Error sending file:", err);
         //     res
