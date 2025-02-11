@@ -48,26 +48,26 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
         // Send the cleaned audio file as a response
         
         res.download(enhancedPath, "processed_audio.wav", (err) => {
-        //   if (err) {
-        //     console.error("Error sending file:", err);
-        //     res
-        //       .status(500)
-        //       .json({ status: "error", message: "File sending failed" });
-        //   }
+          if (err) {
+            console.error("Error sending file:", err);
+            res
+              .status(500)
+              .json({ status: "error", message: "File sending failed" });
+          }
 
-        //   // Cleanup: Delete processed and original files after sending
-        //   fs.unlink(enhancedPath, (err) => {
-        //     if (err) console.error("Error deleting enhanced file:", err);
-        //   });
+          // Cleanup: Delete processed and original files after sending
+          fs.unlink(enhancedPath, (err) => {
+            if (err) console.error("Error deleting enhanced file:", err);
+          });
 
-        //   fs.unlink(wavPath, (err) => {
-        //     if (err) console.error("Error deleting WAV file:", err);
-        //   });
+          fs.unlink(wavPath, (err) => {
+            if (err) console.error("Error deleting WAV file:", err);
+          });
 
-        //   fs.unlink(inputPath, (err) => {
-        //     if (err) console.error("Error deleting input file:", err);
-        //   });
-        // });
+          fs.unlink(inputPath, (err) => {
+            if (err) console.error("Error deleting input file:", err);
+          });
+        });
       });
 
       pythonProcess.stderr.on("data", (err) => {
@@ -84,4 +84,4 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-});
+})
