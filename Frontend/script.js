@@ -16,26 +16,27 @@ recordBtn.addEventListener("click", () => {
 
 // When a file is selected by the user
 fileInput.addEventListener("change", (event) => {
+  event.preventDefault()
   const file = event.target.files[0]; // Get the selected file
-  if (file && file.type === "audio/mp3") {
+ 
     // Send the selected audio file to the backend directly
     sendAudioToBackend(file);
-  } else {
-    alert("Please select an MP3 audio file.");
-  }
+  
 });
 
 // Function to send the audio file to the backend
 function sendAudioToBackend(audioFile) {
+
   const formData = new FormData();
   formData.append("file", audioFile, audioFile.name); // Append the selected audio file
 
   // Send the audio file to the backend via POST request
-  fetch("http://127.0.0.1:5000/process-audio", {
+  fetch("http://localhost:8080/process-audio", {
     method: "POST",
     body: formData,
   })
     .then((response) => {
+      console.log(response)
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -54,3 +55,6 @@ function sendAudioToBackend(audioFile) {
       console.error("Error uploading or processing audio:", error);
     });
 }
+
+
+
