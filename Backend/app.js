@@ -16,11 +16,8 @@ app.use(express.json());
 const upload = multer({ dest: "uploads/" });
 
 app.post("/process-audio", upload.single("file"), (req, res) => {
-    console.log(req.body)
-    console.log(req.file)
 
-   
-    
+
   if (!req.file) {
     return res
       .status(400)
@@ -46,7 +43,7 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
         console.log(`Enhanced file: ${enhancedPath}`);
 
         // Send the cleaned audio file as a response
-        
+
         res.download(enhancedPath, "processed_audio.wav", (err) => {
           if (err) {
             console.error("Error sending file:", err);
@@ -84,4 +81,4 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-})
+});
