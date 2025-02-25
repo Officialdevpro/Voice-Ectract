@@ -2,3 +2,4 @@ numpy
 noisereduce
 pedalboard
 soundfile
+librosa
