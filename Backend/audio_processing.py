@@ -49,9 +49,9 @@ def analyze_audio(audio_path):
     spectrum = np.abs(np.fft.rfft(y))
     mean_frequency = np.sum(freqs * spectrum) / np.sum(spectrum) if np.sum(spectrum) > 0 else 0
 
-    # Extract tempo (BPM) - FIXED!
     tempo_array, _ = librosa.beat.beat_track(y=y, sr=sr)
-    tempo_value = float(tempo_array)  # ✅ Convert NumPy array to float
+    tempo_value = float(tempo_array[0]) if tempo_array.size > 0 else 0
+
 
     return avg_pitch, amplitude_value, mean_frequency, tempo_value
 
