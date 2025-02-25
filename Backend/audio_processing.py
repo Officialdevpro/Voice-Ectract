@@ -72,4 +72,7 @@ if __name__ == "__main__":
     print(enhanced_audio)
 
     # 🔹 Log pitch, amplitude, frequency & tempo separately
-   
+    print(f"Estimated Pitch (Hz): {pitch_value:.2f}", file=sys.stderr)
+    print(f"Estimated Amplitude (RMS): {amplitude_value:.4f}", file=sys.stderr)
+    print(f"Mean Frequency (Hz): {mean_frequency:.2f}", file=sys.stderr)
+    print(f"Estimated Tempo (BPM): {tempo_value:.2f}", file=sys.stderr)
