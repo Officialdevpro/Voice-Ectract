@@ -3,3 +3,7 @@ noisereduce
 pedalboard
 soundfile
 librosa
+scipy
+audioread
+joblib
+pooch
