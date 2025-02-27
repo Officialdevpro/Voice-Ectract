@@ -15,6 +15,12 @@ app.use(express.json());
 // Multer setup for file uploads
 const upload = multer({ dest: "uploads/" });
 
+app.get("/",(req,res)=>{
+  res.status(200).json({
+    status:"success"
+  })
+})
+
 app.post("/process-audio", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res
@@ -25,85 +31,57 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
   const inputPath = req.file.path;
   const wavPath = `uploads/${Date.now()}_audio.wav`;
 
-  // ✅ Convert to WAV
+  // Convert to WAV
   ffmpeg(inputPath)
     .output(wavPath)
-    .audioCodec("pcm_s16le")
+    .audioCodec("pcm_s16le") // Convert to WAV format
     .toFormat("wav")
     .on("end", () => {
-      // ✅ Call Python script to process audio
+      console.log(`Conversion successful: ${wavPath}`);
+
+      // Call Python script to clean noise
       const pythonProcess = spawn("python", ["audio_processing.py", wavPath]);
 
-      let enhancedPath = "";
-      let pitchValue = 0;
-      let amplitudeValue = 0;
-      let meanFrequency = 0;
-      let tempoValue = 0; // ✅ Added tempo value
-
       pythonProcess.stdout.on("data", (data) => {
-        enhancedPath = data.toString().trim();
-      });
+        const enhancedPath = data.toString().trim(); // Path of enhanced WAV file
+        console.log(`Enhanced file: ${enhancedPath}`);
 
-      pythonProcess.stderr.on("data", (data) => {
-        const stderrMessage = data.toString().trim();
+        // Send the cleaned audio file as a response
 
-        // Log Python stderr for debugging
-        console.log("Python stderr:", stderrMessage);
+        res.download(enhancedPath, "processed_audio.wav", (err) => {
+          if (err) {
+            console.error("Error sending file:", err);
+            res
+              .status(500)
+              .json({ status: "error", message: "File sending failed" });
+          }
 
-        // Extract values from stderr
-        const pitchMatch = stderrMessage.match(/Estimated Pitch \(Hz\): ([\d.]+)/);
-        const ampMatch = stderrMessage.match(/Estimated Amplitude \(RMS\): ([\d.]+)/);
-        const freqMatch = stderrMessage.match(/Mean Frequency \(Hz\): ([\d.]+)/);
-        const tempoMatch = stderrMessage.match(/Estimated Tempo \(BPM\): ([\d.]+)/); // ✅ Extract tempo
+          // Cleanup: Delete processed and original files after sending
+          fs.unlink(enhancedPath, (err) => {
+            if (err) console.error("Error deleting enhanced file:", err);
+          });
 
-        if (pitchMatch) pitchValue = parseFloat(pitchMatch[1]);
-        if (ampMatch) amplitudeValue = parseFloat(ampMatch[1]);
-        if (freqMatch) meanFrequency = parseFloat(freqMatch[1]);
-        if (tempoMatch) tempoValue = parseFloat(tempoMatch[1]); // ✅ Set tempo
-      });
+          fs.unlink(wavPath, (err) => {
+            if (err) console.error("Error deleting WAV file:", err);
+          });
 
-      pythonProcess.on("close", (code) => {
-        if (code !== 0 || !enhancedPath) {
-          console.error(`Python process exited with code ${code}`);
-          return sendError(res, "Processing failed", [wavPath, inputPath]);
-        }
-
-        // ✅ Send success response with all extracted values
-        res.json({
-          status: "success",
-          enhancedAudio: enhancedPath,
-          pitch: pitchValue || 0,
-          amplitude: amplitudeValue || 0,
-          meanFrequency: meanFrequency || 0,
-          tempo: tempoValue || 0, // ✅ Include tempo in response
+          fs.unlink(inputPath, (err) => {
+            if (err) console.error("Error deleting input file:", err);
+          });
         });
+      });
 
-        cleanupFiles([wavPath, inputPath]); // Keep enhanced file for download
+      pythonProcess.stderr.on("data", (err) => {
+        console.error("Python Error:", err.toString());
+        res.status(500).json({ status: "error", message: "Processing failed" });
       });
     })
     .on("error", (err) => {
       console.error("FFmpeg error:", err);
-      sendError(res, "Conversion failed", [inputPath]);
+      res.status(500).json({ status: "error", message: "Conversion failed" });
     })
     .run();
 });
-
-// ✅ Helper function to delete files
-function cleanupFiles(paths) {
-  paths.forEach((file) => {
-    fs.unlink(file, (err) => {
-      if (err) console.error(`Error deleting ${file}:`, err);
-    });
-  });
-}
-
-// ✅ Helper function to send error response and clean up files
-function sendError(res, message, filesToDelete = []) {
-  if (!res.headersSent) {
-    res.status(500).json({ status: "error", message });
-  }
-  cleanupFiles(filesToDelete);
-}
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
