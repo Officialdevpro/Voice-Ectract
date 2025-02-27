@@ -31,8 +31,6 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
     .audioCodec("pcm_s16le")
     .toFormat("wav")
     .on("end", () => {
-      console.log(`Conversion successful: ${wavPath}`);
-
       // ✅ Call Python script to process audio
       const pythonProcess = spawn("python", ["audio_processing.py", wavPath]);
 
@@ -49,6 +47,10 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
       pythonProcess.stderr.on("data", (data) => {
         const stderrMessage = data.toString().trim();
 
+        // Log Python stderr for debugging
+        console.log("Python stderr:", stderrMessage);
+
+        // Extract values from stderr
         const pitchMatch = stderrMessage.match(/Estimated Pitch \(Hz\): ([\d.]+)/);
         const ampMatch = stderrMessage.match(/Estimated Amplitude \(RMS\): ([\d.]+)/);
         const freqMatch = stderrMessage.match(/Mean Frequency \(Hz\): ([\d.]+)/);
@@ -60,22 +62,20 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
         if (tempoMatch) tempoValue = parseFloat(tempoMatch[1]); // ✅ Set tempo
       });
 
-      pythonProcess.stderr.on("data", (err) => {
-        console.error("Python Error:", err.toString());
-      });
-
       pythonProcess.on("close", (code) => {
         if (code !== 0 || !enhancedPath) {
+          console.error(`Python process exited with code ${code}`);
           return sendError(res, "Processing failed", [wavPath, inputPath]);
         }
 
+        // ✅ Send success response with all extracted values
         res.json({
           status: "success",
           enhancedAudio: enhancedPath,
           pitch: pitchValue || 0,
           amplitude: amplitudeValue || 0,
           meanFrequency: meanFrequency || 0,
-          tempo: tempoValue || 0, // ✅ Return tempo value
+          tempo: tempoValue || 0, // ✅ Include tempo in response
         });
 
         cleanupFiles([wavPath, inputPath]); // Keep enhanced file for download
@@ -87,7 +87,6 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
     })
     .run();
 });
-
 
 // ✅ Helper function to delete files
 function cleanupFiles(paths) {

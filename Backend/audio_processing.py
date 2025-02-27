@@ -33,28 +33,36 @@ def process_audio(input_file):
     return output_file
 
 def analyze_audio(audio_path):
-    # Load processed audio file
-    y, sr = librosa.load(audio_path, sr=None)
+    try:
+        # Load processed audio file
+        y, sr = librosa.load(audio_path, sr=None)
 
-    # Estimate pitch using YIN algorithm
-    pitch_values = librosa.yin(y, fmin=50, fmax=500, sr=sr)
-    pitch_values = pitch_values[~np.isnan(pitch_values)]
-    avg_pitch = np.mean(pitch_values) if pitch_values.size > 0 else 0
+        # Estimate pitch using YIN algorithm
+        pitch_values = librosa.yin(y, fmin=50, fmax=500, sr=sr)
+        pitch_values = pitch_values[~np.isnan(pitch_values)]
+        avg_pitch = np.mean(pitch_values) if pitch_values.size > 0 else 0
 
-    # Calculate amplitude (RMS)
-    amplitude_value = np.sqrt(np.mean(y**2))
+        # Calculate amplitude (RMS)
+        amplitude_value = np.sqrt(np.mean(y**2))
 
-    # Calculate frequency spectrum (Mean Frequency)
-    freqs = np.fft.rfftfreq(len(y), d=1/sr)
-    spectrum = np.abs(np.fft.rfft(y))
-    mean_frequency = np.sum(freqs * spectrum) / np.sum(spectrum) if np.sum(spectrum) > 0 else 0
+        # Calculate frequency spectrum (Mean Frequency)
+        freqs = np.fft.rfftfreq(len(y), d=1/sr)
+        spectrum = np.abs(np.fft.rfft(y))
+        mean_frequency = np.sum(freqs * spectrum) / np.sum(spectrum) if np.sum(spectrum) > 0 else 0
 
-    tempo_array, _ = librosa.beat.beat_track(y=y, sr=sr)
-    tempo_value = float(tempo_array[0]) if tempo_array.size > 0 else 0
+        # Estimate tempo
+        tempo_array, _ = librosa.beat.beat_track(y=y, sr=sr)
+        tempo_value = float(tempo_array[0]) if tempo_array.size > 0 else 0
 
+        # Validate tempo value
+        if tempo_value < 40 or tempo_value > 240:  # Typical BPM range
+            print(f"Warning: Invalid tempo value detected: {tempo_value}. Setting to 0.", file=sys.stderr)
+            tempo_value = 0
 
-    return avg_pitch, amplitude_value, mean_frequency, tempo_value
-
+        return avg_pitch, amplitude_value, mean_frequency, tempo_value
+    except Exception as e:
+        print(f"Error analyzing audio file {audio_path}: {e}", file=sys.stderr)
+        return None, None, None, None
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python process_audio.py <input_file>")
