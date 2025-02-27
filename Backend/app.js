@@ -116,7 +116,7 @@ app.post("/parameters", upload.single("file"), (req, res) => {
         if (res.headersSent) return; // Prevent sending multiple responses
         try {
           const result = JSON.parse(pythonOutput.trim()); // Ensure clean parsing
-         
+         console.log(result)
           res.json({ status: "success", data: result });
         } catch (error) {
           console.error("Error parsing Python output:", error);
