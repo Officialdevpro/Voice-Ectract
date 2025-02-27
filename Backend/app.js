@@ -83,6 +83,65 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
     .run();
 });
 
+app.post("/parameters", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ status: "error", message: "No file uploaded" });
+  }
+
+  return res.status(200).json({
+    status:"success"
+  })
+  const inputPath = req.file.path;
+  const wavPath = `uploads/${Date.now()}_audio.wav`;
+
+  // Convert to WAV format
+  ffmpeg(inputPath)
+    .output(wavPath)
+    .audioCodec("pcm_s16le")
+    .toFormat("wav")
+    .on("end", () => {
+      console.log(`Conversion successful: ${wavPath}`);
+
+      // Call Python script to process audio and return parameters
+      const pythonProcess = spawn("python", ["audio_processing.py", wavPath]);
+
+      let pythonOutput = "";
+
+      pythonProcess.stdout.on("data", (data) => {
+        pythonOutput += data.toString();
+      });
+
+      pythonProcess.on("close", () => {
+        try {
+          const result = JSON.parse(pythonOutput);
+          res.json({ status: "success", data: result });
+        } catch (error) {
+          console.error("Error parsing Python output:", error);
+          res.status(500).json({ status: "error", message: "Processing failed" });
+        }
+
+        // Cleanup: Delete processed and original files
+        fs.unlink(wavPath, (err) => {
+          if (err) console.error("Error deleting WAV file:", err);
+        });
+
+        fs.unlink(inputPath, (err) => {
+          if (err) console.error("Error deleting input file:", err);
+        });
+      });
+
+      pythonProcess.stderr.on("data", (err) => {
+        console.error("Python Error:", err.toString());
+        res.status(500).json({ status: "error", message: "Processing failed" });
+      });
+    })
+    .on("error", (err) => {
+      console.error("FFmpeg error:", err);
+      res.status(500).json({ status: "error", message: "Conversion failed" });
+    })
+    .run();
+});
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
