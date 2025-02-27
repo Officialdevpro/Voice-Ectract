@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Analyzer 🎵</title>
+    <script src="https://cdn.jsdelivr.net/npm/meyda@5.4.0/dist/web/meyda.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pitchy@1.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/music-tempo"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #fileInput {
+            margin: 10px;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+        }
+    </style>
+    <link rel="icon" href="data:,">  <!-- Prevents favicon 404 error -->
+</head>
+<body>
+    <h2>Audio Analyzer 🎵</h2>
+    <input type="file" id="fileInput" accept="audio/*">
+    <audio id="audioPlayer" controls style="display: none;"></audio>
+    <div id="results">Upload an audio file to analyze</div>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const audioPlayer = document.getElementById("audioPlayer");
+        const resultsDiv = document.getElementById("results");
+
+        fileInput.addEventListener("change", async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const objectURL = URL.createObjectURL(file);
+            audioPlayer.src = objectURL;
+            audioPlayer.style.display = "block";
+
+            const audioContext = new AudioContext();
+            const source = audioContext.createMediaElementSource(audioPlayer);
+            const analyser = audioContext.createAnalyser();
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+
+            const buffer = await file.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(buffer);
+            
+            analyzeAudio(audioContext, analyser, audioBuffer);
+        });
+
+        function analyzeAudio(audioContext, analyser, audioBuffer) {
+            const meyda = Meyda.createMeydaAnalyzer({
+                audioContext: audioContext,
+                source: analyser,
+                bufferSize: 512,
+                featureExtractors: ["rms", "spectralCentroid"],
+                callback: (features) => {
+                    const amplitude = features.rms.toFixed(4);
+                    const frequency = features.spectralCentroid.toFixed(2);
+                    resultsDiv.innerHTML = `🎵 <b>Amplitude:</b> ${amplitude} <br> 🎼 <b>Frequency:</b> ${frequency} Hz`;
+                },
+            });
+
+            const buffer = new Float32Array(analyser.fftSize);
+            analyser.getFloatTimeDomainData(buffer);
+            const [pitch] = window.Pitchy.estimatePitch(buffer, audioContext.sampleRate);
+            
+            resultsDiv.innerHTML += `<br> 🎤 <b>Pitch:</b> ${pitch.toFixed(2)} Hz`;
+
+            const tempo = new MusicTempo(audioBuffer.getChannelData(0));
+            resultsDiv.innerHTML += `<br> 🥁 <b>Tempo:</b> ${tempo.tempo.toFixed(2)} BPM`;
+
+            meyda.start();
+        }
+    </script>
+</body>
+</html>

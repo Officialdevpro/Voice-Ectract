@@ -15,11 +15,11 @@ app.use(express.json());
 // Multer setup for file uploads
 const upload = multer({ dest: "uploads/" });
 
-app.get("/",(req,res)=>{
+app.get("/", (req, res) => {
   res.status(200).json({
-    status:"success"
-  })
-})
+    status: "success",
+  });
+});
 
 app.post("/process-audio", upload.single("file"), (req, res) => {
   if (!req.file) {
@@ -85,14 +85,16 @@ app.post("/process-audio", upload.single("file"), (req, res) => {
 
 app.post("/parameters", upload.single("file"), (req, res) => {
   if (!req.file) {
-    return res.status(400).json({ status: "error", message: "No file uploaded" });
+    return res
+      .status(400)
+      .json({ status: "error", message: "No file uploaded" });
   }
 
-  return res.status(200).json({
-    status:"success"
-  })
   const inputPath = req.file.path;
   const wavPath = `uploads/${Date.now()}_audio.wav`;
+
+  console.log(inputPath);
+  console.log(wavPath);
 
   // Convert to WAV format
   ffmpeg(inputPath)
@@ -103,8 +105,7 @@ app.post("/parameters", upload.single("file"), (req, res) => {
       console.log(`Conversion successful: ${wavPath}`);
 
       // Call Python script to process audio and return parameters
-      const pythonProcess = spawn("python", ["audio_processing.py", wavPath]);
-
+      const pythonProcess = spawn("python", ["converter.py", wavPath]);
       let pythonOutput = "";
 
       pythonProcess.stdout.on("data", (data) => {
@@ -112,12 +113,18 @@ app.post("/parameters", upload.single("file"), (req, res) => {
       });
 
       pythonProcess.on("close", () => {
+        if (res.headersSent) return; // Prevent sending multiple responses
         try {
-          const result = JSON.parse(pythonOutput);
+          const result = JSON.parse(pythonOutput.trim()); // Ensure clean parsing
+         
           res.json({ status: "success", data: result });
         } catch (error) {
           console.error("Error parsing Python output:", error);
-          res.status(500).json({ status: "error", message: "Processing failed" });
+          if (!res.headersSent) {
+            res
+              .status(500)
+              .json({ status: "error", message: "Processing failed" });
+          }
         }
 
         // Cleanup: Delete processed and original files

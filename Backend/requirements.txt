@@ -3,3 +3,4 @@ librosa
 noisereduce
 pedalboard
 soundfile
+scipy
