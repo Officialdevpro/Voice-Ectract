@@ -20,8 +20,9 @@ def extract_audio_features(audio_path):
         freqs = np.fft.rfftfreq(len(y), 1 / sr)
         dominant_freq = round(float(freqs[np.argmax(fft_spectrum)]), 2)
 
-        tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-        tempo = round(float(tempo), 2)
+        tempo_array, _ = librosa.beat.beat_track(y=y, sr=sr)
+        tempo = round(float(tempo_array[0]), 2) if len(tempo_array) > 0 else None
+
 
         result = {
             "pitch": pitch,
